@@ -76,13 +76,41 @@ export class StreaklyStack extends cdk.Stack {
       enforceSSL: true,
       cors: [
         {
-          allowedMethods: [s3.HttpMethods.PUT],
+          allowedMethods: [s3.HttpMethods.GET, s3.HttpMethods.PUT, s3.HttpMethods.POST],
           allowedOrigins: [allowedOrigin],
           allowedHeaders: ["*"],
         },
       ],
       removalPolicy: removal,
       autoDeleteObjects: !isProd,
+    });
+
+    // --- Phase 2: AI Plan Queues ---
+    const aiPlanDlq = new sqs.Queue(this, "AiPlanDlq", {
+      enforceSSL: true,
+    });
+
+    const aiPlanQueue = new sqs.Queue(this, "AiPlanQueue", {
+      enforceSSL: true,
+      visibilityTimeout: cdk.Duration.seconds(300), // وقت طويل عشان الـ AI بياخد وقت
+      deadLetterQueue: {
+        maxReceiveCount: 3,
+        queue: aiPlanDlq,
+      },
+    });
+
+    // --- Phase 2: Push Notifications Retry Queues ---
+    const pushRetryDlq = new sqs.Queue(this, "PushRetryDlq", {
+      enforceSSL: true,
+    });
+
+    const pushRetryQueue = new sqs.Queue(this, "PushRetryQueue", {
+      enforceSSL: true,
+      visibilityTimeout: cdk.Duration.seconds(30),
+      deadLetterQueue: {
+        maxReceiveCount: 5,
+        queue: pushRetryDlq,
+      },
     });
 
     // ---- Compute ----

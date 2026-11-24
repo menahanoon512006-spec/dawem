@@ -84,8 +84,9 @@ describe("StreaklyStack", () => {
     });
   });
 
-  test("creates SQS DLQ and 15-minute EventBridge reminder schedule", () => {
-    template.resourceCountIs("AWS::SQS::Queue", 1);
+  // --- التعديل هنا: تحديث عدد الـ Queues لـ 5 ---
+  test("creates SQS Queues (DLQs, AI, Retry) and 15-minute EventBridge schedule", () => {
+    template.resourceCountIs("AWS::SQS::Queue", 5);
     template.hasResourceProperties("AWS::Events::Rule", {
       ScheduleExpression: "rate(15 minutes)",
     });
